@@ -13,7 +13,8 @@ func InitRouter() {
 		})
 		u.POST("/register", Register)
 		u.POST("/login", Login)
-		u.PUT("/password")
+		u.POST("/securityQuestion", SetSecurityQuestion)
+		u.PUT("/resetPassword", ResetPassword)
 	}
 
 	m := r.Group("/message")
