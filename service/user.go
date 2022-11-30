@@ -17,7 +17,7 @@ func SearchUserByUserName(name string) (u model.User, err error) {
 }
 
 func CreateUser(u model.User) error {
-	fmt.Println("执行CreateUser")
+	fmt.Println("执行service.CreateUser")
 	err := dao.InsertUser(u)
 	return err
 }
