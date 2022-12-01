@@ -13,7 +13,7 @@ func CreateMessage(m model.Message) (err error) {
 }
 
 func SearchMessageByMID(MID int64) (m model.Message, err error) {
-	fmt.Println("执行service.SearchMessageByUID")
+	fmt.Println("执行service.SearchMessageByMID")
 	m, err = dao.SearchMessageByMID(MID)
 	return
 }
@@ -27,5 +27,11 @@ func ModifyMessage(MID int64, newDetail string) (err error) {
 func DeleteMessage(MID int64) (err error) {
 	fmt.Println("执行service.DeleteMessage")
 	err = dao.DeleteMessage(MID)
+	return
+}
+
+func GetMessageNumber() (num int64, err error) {
+	fmt.Println("执行service.GetMessageNumber")
+	num, err = dao.GetMessageNumber()
 	return
 }

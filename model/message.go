@@ -7,4 +7,5 @@ type Message struct {
 	Detail     string `json:"detail"`
 	IsModified int64  `json:"isModified"`
 	IsDeleted  int64  `json:"isDeleted"`
+	Thread     string `json:"thread"`
 }

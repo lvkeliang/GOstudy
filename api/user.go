@@ -79,9 +79,7 @@ func Login(c *gin.Context) {
 
 func SetSecurityQuestion(c *gin.Context) {
 	cookie, err := c.Cookie("name")
-	question := c.PostForm("question")
-	answer := c.PostForm("answer")
-	fmt.Printf("cookie: %v\nquestion: %v\nanswer: %v\n", cookie, question, answer)
+	//fmt.Printf("cookie: %v\nquestion: %v\nanswer: %v\n", cookie, question, answer)
 	u, err := service.SearchUserByUserName(cookie)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -105,6 +103,15 @@ func SetSecurityQuestion(c *gin.Context) {
 
 	if q.Question != "" {
 		util.NormErr(c, 20003, "已经设置过密保了")
+		return
+	}
+
+	question := c.PostForm("question")
+	answer := c.PostForm("answer")
+
+	if question == "" || answer == "" {
+		fmt.Println("输入空字符")
+		util.RespParamErr(c)
 		return
 	}
 

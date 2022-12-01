@@ -8,28 +8,80 @@ import (
 	"message_board/model"
 	"message_board/service"
 	"message_board/util"
+	"net/http"
 	"strconv"
 )
 
-func GetMessage(c *gin.Context) {
+func GetAllMessage(c *gin.Context) {
 	//mid := c.PostForm("mid")
-}
-
-func PostMessage(c *gin.Context) {
-	u, err := service.IsLoggedIn(c)
+	cookie, err := c.Cookie("name")
+	_, err = service.SearchUserByUserName(cookie)
 	if err != nil {
-		log.Printf("Is Logged In error : %v", err)
+		if err == sql.ErrNoRows {
+			util.NormErr(c, 300, "未登录")
+		} else {
+			log.Printf("ResetPassword search user error : %v", err)
+			util.RespInternalErr(c)
+			return
+		}
+		return
+	}
+
+	var AllMsg []model.Message
+
+	i, err := service.GetMessageNumber()
+	if err != nil {
+		log.Printf("Get Message Number error : %v", err)
 		util.RespInternalErr(c)
 		return
 	}
 
-	if u.UserName == "" {
-		util.NormErr(c, 300, "未登录")
+	for ; i > 0; i-- {
+		Msg, err := service.SearchMessageByMID(i)
+		if err != nil {
+			log.Printf("Search Message By MID error : %v", err)
+			util.RespInternalErr(c)
+			return
+		}
+		if Msg.RecUID != -1 {
+			if Msg.IsDeleted == 1 {
+				AllMsg = append(AllMsg, model.Message{
+					MID:       i,
+					IsDeleted: 1,
+				})
+			} else {
+				AllMsg = append(AllMsg, Msg)
+			}
+		}
+		//fmt.Printf("i : %v\nAllMsg : %v\n", i, AllMsg)
+	}
+	c.JSON(http.StatusOK, AllMsg)
+	util.RespOK(c)
+	return
+}
+
+func PostMessage(c *gin.Context) {
+	cookie, err := c.Cookie("name")
+	u, err := service.SearchUserByUserName(cookie)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			util.NormErr(c, 300, "未登录")
+		} else {
+			log.Printf("ResetPassword search user error : %v", err)
+			util.RespInternalErr(c)
+			return
+		}
 		return
 	}
 
 	receiverName := c.PostForm("receiverName")
 	detail := c.PostForm("detail")
+
+	if receiverName == "" || detail == "" {
+		log.Printf("receiverName and detail cannot be empty : %v\n", err)
+		util.RespParamErr(c)
+		return
+	}
 
 	receiver, err := service.SearchUserByUserName(receiverName)
 
@@ -44,10 +96,19 @@ func PostMessage(c *gin.Context) {
 		return
 	}
 
+	cid, err := service.GetMessageNumber()
+	if err != nil {
+		log.Printf("Get Message Number error : %v", err)
+		util.RespInternalErr(c)
+		return
+	}
+
+	fmt.Printf("cid: %v \n", cid)
 	err = service.CreateMessage(model.Message{
 		SenderUID: u.ID,
 		RecUID:    receiver.ID,
 		Detail:    detail,
+		Thread:    "/" + strconv.FormatInt(cid+1, 10) + "/",
 	})
 
 	if err != nil {
@@ -57,24 +118,40 @@ func PostMessage(c *gin.Context) {
 	}
 
 	util.RespOK(c)
+	return
 }
 
 func ModifyMessage(c *gin.Context) {
-	u, err := service.IsLoggedIn(c)
+	cookie, err := c.Cookie("name")
+	u, err := service.SearchUserByUserName(cookie)
 	if err != nil {
-		log.Printf("Is Logged In error : %v", err)
-		util.RespInternalErr(c)
+		if err == sql.ErrNoRows {
+			util.NormErr(c, 300, "未登录")
+		} else {
+			log.Printf("ResetPassword search user error : %v", err)
+			util.RespInternalErr(c)
+			return
+		}
 		return
 	}
 
-	if u.UserName == "" {
-		util.NormErr(c, 300, "未登录")
+	mid := c.PostForm("mid")
+
+	if mid == "" {
+		log.Printf("mid cannot be empty : %v", err)
+		util.RespParamErr(c)
 		return
 	}
 
-	mID, err := strconv.Atoi(c.PostForm("mid"))
+	mID, err := strconv.Atoi(mid)
 	MID := int64(mID)
 	newDetail := c.PostForm("newDetail")
+
+	if newDetail == "" {
+		log.Printf("newDetail cannot be empty : %v", err)
+		util.RespParamErr(c)
+		return
+	}
 
 	if err != nil {
 		log.Printf("MID receive err : %v", err)
@@ -84,8 +161,13 @@ func ModifyMessage(c *gin.Context) {
 
 	m, err := service.SearchMessageByMID(MID)
 	if err != nil {
-		log.Printf("Search Message By MID error : %v", err)
-		util.RespInternalErr(c)
+		if err == sql.ErrNoRows {
+			util.NormErr(c, 300, "此MID无对应留言")
+		} else {
+			log.Printf("ModifyMessage Search Message By MID error : %v", err)
+			util.RespInternalErr(c)
+			return
+		}
 		return
 	}
 
@@ -108,22 +190,32 @@ func ModifyMessage(c *gin.Context) {
 	}
 
 	util.RespOK(c)
+	return
 }
 
 func DeleteMessage(c *gin.Context) {
-	u, err := service.IsLoggedIn(c)
+	cookie, err := c.Cookie("name")
+	u, err := service.SearchUserByUserName(cookie)
 	if err != nil {
-		log.Printf("Is Logged In error : %v", err)
-		util.RespInternalErr(c)
+		if err == sql.ErrNoRows {
+			util.NormErr(c, 300, "未登录")
+		} else {
+			log.Printf("ResetPassword search user error : %v", err)
+			util.RespInternalErr(c)
+			return
+		}
 		return
 	}
 
-	if u.UserName == "" {
-		util.NormErr(c, 300, "未登录")
+	mid := c.PostForm("mid")
+
+	if mid == "" {
+		log.Printf("mid cannot be empty : %v", err)
+		util.RespParamErr(c)
 		return
 	}
 
-	mID, err := strconv.Atoi(c.PostForm("mid"))
+	mID, err := strconv.Atoi(mid)
 	MID := int64(mID)
 
 	if err != nil {
@@ -134,13 +226,23 @@ func DeleteMessage(c *gin.Context) {
 
 	m, err := service.SearchMessageByMID(MID)
 	if err != nil {
-		log.Printf("Search Message By MID error : %v", err)
-		util.RespInternalErr(c)
+		if err == sql.ErrNoRows {
+			util.NormErr(c, 300, "此MID无对应留言")
+		} else {
+			log.Printf("DeleteMessage Search Message By MID error : %v", err)
+			util.RespInternalErr(c)
+			return
+		}
 		return
 	}
 
 	if m.SenderUID != u.ID {
 		util.NormErr(c, 300, "没有权限")
+		return
+	}
+
+	if m.IsDeleted == 1 {
+		util.NormErr(c, 300, "已经删除")
 		return
 	}
 
@@ -152,4 +254,5 @@ func DeleteMessage(c *gin.Context) {
 	}
 
 	util.RespOK(c)
+	return
 }

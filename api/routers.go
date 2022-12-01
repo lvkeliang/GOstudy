@@ -19,10 +19,18 @@ func InitRouter() {
 
 	m := r.Group("/message")
 	{
-		m.GET("/message", GetMessage)
+		m.GET("/message", GetAllMessage)
 		m.POST("/message", PostMessage)
 		m.PUT("/message", ModifyMessage)
 		m.DELETE("/message", DeleteMessage)
+
+		co := m.Group("/comment")
+		{
+			co.GET("/comment", GetComment)
+			co.POST("/comment", CreateComment)
+			co.PUT("/comment", ModifyComment)
+			co.DELETE("/comment", DeleteComment)
+		}
 	}
 
 	r.Run()
