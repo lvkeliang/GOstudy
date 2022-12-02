@@ -1,10 +1,10 @@
 # GOstudy
 
-#红岩第七节课作业
+# 红岩第七节课作业
 
-##数据库及表的结构
+## 数据库及表的结构
 
-###数据库
+### 数据库
 
 message_board
 
@@ -13,7 +13,7 @@ message_board
 | message                 |
 | security_question       |
 | user                    |
-###表
+### 表
 
 user
 
@@ -50,7 +50,7 @@ message
 添加了编辑和删除留言和评论时的权限验证，
 发布者才可以执行这两个操作。
 
-##lv3
+## lv3
 
 通过对message表添加thread列来记录本条记录所处节点，
 格式为/{mid}/{mid}/，
