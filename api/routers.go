@@ -15,6 +15,7 @@ func InitRouter() {
 		u.POST("/login", Login)
 		u.POST("/securityQuestion", SetSecurityQuestion)
 		u.PUT("/resetPassword", ResetPassword)
+		u.DELETE("/announcement", Announcement)
 	}
 
 	m := r.Group("/message")

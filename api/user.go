@@ -77,6 +77,25 @@ func Login(c *gin.Context) {
 	fmt.Println("Cookie设置成功")
 }
 
+func Announcement(c *gin.Context) {
+	cookie, err := c.Cookie("name")
+	_, err = service.SearchUserByUserName(cookie)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			util.NormErr(c, 300, "未登录")
+		} else {
+			log.Printf("ResetPassword search user error : %v", err)
+			util.RespInternalErr(c)
+			return
+		}
+		return
+	}
+
+	c.SetCookie("name", "", -1, "", "/", false, false)
+	util.RespOK(c)
+	fmt.Println("Cookie删除成功")
+}
+
 func SetSecurityQuestion(c *gin.Context) {
 	cookie, err := c.Cookie("name")
 	//fmt.Printf("cookie: %v\nquestion: %v\nanswer: %v\n", cookie, question, answer)
